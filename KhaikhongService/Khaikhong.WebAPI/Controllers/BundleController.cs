@@ -1,6 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Khaikhong.Application.Common.Models;
 using Khaikhong.Application.Features.Bundles.Commands.CreateBundle;
 using Khaikhong.Application.Features.Bundles.Dtos;
+using Khaikhong.Application.Features.Bundles.Queries.GetAllBundles;
+using Khaikhong.Application.Features.Bundles.Queries.GetBundleById;
 using Khaikhong.WebAPI.Swagger.Examples.Bundles;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,6 +22,29 @@ namespace Khaikhong.WebAPI.Controllers;
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class BundleController(IMediator mediator) : ControllerBase
 {
+    [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<List<BundleResponseDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetBundles(CancellationToken cancellationToken)
+    {
+        ApiResponse<List<BundleResponseDto>> response = await mediator.Send(new GetAllBundlesQuery(), cancellationToken);
+        return StatusCode(response.Status, response);
+    }
+
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<BundleResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<BundleResponseDto>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetBundleById(Guid id, CancellationToken cancellationToken)
+    {
+        ApiResponse<BundleResponseDto> response = await mediator.Send(new GetBundleByIdQuery(id), cancellationToken);
+        return StatusCode(response.Status, response);
+    }
+
     [HttpPost]
     [Authorize(Roles = "ADMIN")]
     [ProducesResponseType(typeof(ApiResponse<CreateBundleResponseDto>), StatusCodes.Status200OK)]

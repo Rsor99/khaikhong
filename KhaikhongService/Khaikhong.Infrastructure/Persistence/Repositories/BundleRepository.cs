@@ -72,6 +72,33 @@ public sealed class BundleRepository(KhaikhongDbContext context) : IBundleReposi
             .AnyAsync(item => item.ProductId == productId && item.Bundle.IsActive, cancellationToken);
     }
 
+    public async Task<List<Bundle>> GetAllDetailedAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Bundles
+            .AsNoTracking()
+            .Where(bundle => bundle.IsActive)
+            .Include(bundle => bundle.Items.Where(item => item.IsActive))
+                .ThenInclude(item => item.Product)
+            .Include(bundle => bundle.Items.Where(item => item.IsActive))
+                .ThenInclude(item => item.Variant)
+            .OrderBy(bundle => bundle.Name)
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Bundle?> GetDetailedByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Bundles
+            .AsNoTracking()
+            .Where(bundle => bundle.IsActive && bundle.Id == id)
+            .Include(bundle => bundle.Items.Where(item => item.IsActive))
+                .ThenInclude(item => item.Product)
+            .Include(bundle => bundle.Items.Where(item => item.IsActive))
+                .ThenInclude(item => item.Variant)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     private static bool IsBulkStatsMismatch(MySqlException exception) =>
         exception.Message.Contains("were copied", StringComparison.OrdinalIgnoreCase)
         && exception.Message.Contains("were inserted", StringComparison.OrdinalIgnoreCase);

@@ -13,4 +13,8 @@ public interface IBundleRepository
     Task BulkInsertItemsAsync(IEnumerable<BundleItem> items, CancellationToken cancellationToken = default);
 
     Task<bool> IsProductLinkedAsync(Guid productId, CancellationToken cancellationToken = default);
+
+    Task<List<Bundle>> GetAllDetailedAsync(CancellationToken cancellationToken = default);
+
+    Task<Bundle?> GetDetailedByIdAsync(Guid id, CancellationToken cancellationToken = default);
 }
