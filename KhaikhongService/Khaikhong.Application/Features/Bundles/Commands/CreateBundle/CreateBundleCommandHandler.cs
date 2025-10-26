@@ -5,6 +5,7 @@ using Khaikhong.Application.Common.Models;
 using Khaikhong.Application.Contracts.Persistence;
 using Khaikhong.Application.Contracts.Persistence.Repositories;
 using Khaikhong.Application.Features.Bundles.Dtos;
+using Khaikhong.Application.Contracts.Services;
 using Khaikhong.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -15,11 +16,13 @@ public sealed class CreateBundleCommandHandler(
     IBundleRepository bundleRepository,
     IProductRepository productRepository,
     IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService,
     ILogger<CreateBundleCommandHandler> logger) : IRequestHandler<CreateBundleCommand, ApiResponse<CreateBundleResponseDto>>
 {
     private readonly IBundleRepository _bundleRepository = bundleRepository;
     private readonly IProductRepository _productRepository = productRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ICurrentUserService _currentUserService = currentUserService;
     private readonly ILogger<CreateBundleCommandHandler> _logger = logger;
 
     public async Task<ApiResponse<CreateBundleResponseDto>> Handle(CreateBundleCommand request, CancellationToken cancellationToken)
@@ -86,6 +89,12 @@ public sealed class CreateBundleCommandHandler(
         }
 
         Bundle bundle = Bundle.Create(payload.Name, payload.Price, payload.Description);
+
+        Guid? currentUserId = _currentUserService.UserId;
+        if (currentUserId.HasValue)
+        {
+            bundle.SetCreatedBy(currentUserId.Value);
+        }
 
         IList<BundleItem> items = BuildBundleItems(bundle.Id, payload.Products);
 

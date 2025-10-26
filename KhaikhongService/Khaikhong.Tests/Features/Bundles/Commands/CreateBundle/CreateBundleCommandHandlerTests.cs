@@ -10,6 +10,7 @@ using Khaikhong.Application.Features.Bundles.Dtos;
 using Khaikhong.Domain.Entities;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Khaikhong.Application.Contracts.Services;
 
 namespace Khaikhong.Tests.Features.Bundles.Commands.CreateBundle;
 
@@ -18,6 +19,7 @@ public sealed class CreateBundleCommandHandlerTests
     private readonly Mock<IBundleRepository> _bundleRepository = new();
     private readonly Mock<IProductRepository> _productRepository = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly Mock<ICurrentUserService> _currentUserService = new();
     private readonly Mock<ILogger<CreateBundleCommandHandler>> _logger = new();
 
     public CreateBundleCommandHandlerTests()
@@ -93,6 +95,11 @@ public sealed class CreateBundleCommandHandlerTests
             }
         };
 
+        Guid currentUserId = Guid.Parse("019a1f40-dead-beef-b429-d4def7149999");
+        _currentUserService
+            .Setup(service => service.UserId)
+            .Returns(currentUserId);
+
         _productRepository
             .Setup(repo => repo.AreProductsActiveAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -146,6 +153,11 @@ public sealed class CreateBundleCommandHandlerTests
                 [productId2] = new List<Guid> { variantId }
             });
 
+        Guid currentUserId = Guid.Parse("019a1f40-dead-beef-b429-d4def7149999");
+        _currentUserService
+            .Setup(service => service.UserId)
+            .Returns(currentUserId);
+
         _bundleRepository
             .Setup(repo => repo.AddAsync(It.IsAny<Bundle>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -176,7 +188,8 @@ public sealed class CreateBundleCommandHandlerTests
                 Assert.Equal(2, item.Quantity);
             });
 
-        _bundleRepository.Verify(repo => repo.AddAsync(It.IsAny<Bundle>(), It.IsAny<CancellationToken>()), Times.Once);
+        _bundleRepository.Verify(repo => repo.AddAsync(It.Is<Bundle>(bundle =>
+            bundle.CreatedBy == currentUserId && bundle.UpdatedBy == currentUserId), It.IsAny<CancellationToken>()), Times.Once);
         _bundleRepository.Verify(repo => repo.BulkInsertItemsAsync(It.IsAny<IEnumerable<BundleItem>>(), It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWork.Verify(unit => unit.CompleteAsync(), Times.Exactly(2));
     }
@@ -258,6 +271,7 @@ public sealed class CreateBundleCommandHandlerTests
         _bundleRepository.Object,
         _productRepository.Object,
         _unitOfWork.Object,
+        _currentUserService.Object,
         _logger.Object);
 
     private static CreateBundleRequestDto BuildValidRequest()
