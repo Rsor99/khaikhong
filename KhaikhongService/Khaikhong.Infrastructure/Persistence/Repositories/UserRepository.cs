@@ -1,3 +1,4 @@
+using System.Linq;
 using Khaikhong.Application.Contracts.Persistence.Repositories;
 using Khaikhong.Domain.Entities;
 using Khaikhong.Infrastructure.Persistence;
@@ -13,5 +14,12 @@ public sealed class UserRepository(IdentityDbContext identityDbContext)
     public async Task<User?> GetByEmailAsync(string email)
     {
         return await _identityDbContext.Users.FirstOrDefaultAsync(user => user.Email == email);
+    }
+
+    public async Task<User?> GetActiveUserByIdAsync(Guid id)
+    {
+        return await _identityDbContext.Users
+            .Where(user => user.Id == id && user.IsActive)
+            .FirstOrDefaultAsync();
     }
 }

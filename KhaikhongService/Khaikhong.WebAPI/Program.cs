@@ -1,11 +1,16 @@
+using System.Net.Mime;
 using System.Security.Cryptography;
 using Khaikhong.Application;
+using Khaikhong.Application.Common.Models;
 using Khaikhong.Infrastructure;
 using Khaikhong.Infrastructure.Authentication;
 using Khaikhong.WebAPI.Middlewares;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +65,48 @@ builder.Services
             RequireExpirationTime = true,
             ClockSkew = TimeSpan.FromMinutes(1)
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+
+                if (context.Response.HasStarted)
+                {
+                    return;
+                }
+
+                ApiResponse<object> response = ApiResponse<object>.Fail(
+                    status: StatusCodes.Status401Unauthorized,
+                    message: "Unauthorized - Missing or invalid token",
+                    errors: new[]
+                    {
+                        new { message = "The supplied bearer token is missing, expired, or malformed." }
+                    });
+
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await WriteJsonAsync(context.HttpContext, response);
+            },
+            OnForbidden = context =>
+            {
+                if (context.Response.HasStarted)
+                {
+                    return Task.CompletedTask;
+                }
+
+                ApiResponse<object> response = ApiResponse<object>.Fail(
+                    status: StatusCodes.Status403Forbidden,
+                    message: "Forbidden - You do not have permission",
+                    errors: new
+                    {
+                        message = "Your token is valid, but you do not have sufficient permissions."
+                    });
+
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return WriteJsonAsync(context.HttpContext, response);
+            }
+        };
     })
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
@@ -73,7 +120,39 @@ builder.Services
 // ✅ Controllers + Swagger (Swashbuckle)
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Khaikhong API",
+        Version = "v1",
+        Description = "Secure API for authentication, user management, and product workflows."
+    });
+
+    options.ExampleFilters();
+
+    OpenApiSecurityScheme bearerScheme = new()
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Reference = new OpenApiReference
+        {
+            Type = ReferenceType.SecurityScheme,
+            Id = "Bearer"
+        }
+    };
+
+    options.AddSecurityDefinition("Bearer", bearerScheme);
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        { bearerScheme, Array.Empty<string>() }
+    });
+});
+builder.Services.AddSwaggerExamplesFromAssemblyOf<Program>();
 
 var app = builder.Build();
 
@@ -83,7 +162,11 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Khaikhong API v1");
+        options.RoutePrefix = "swagger";
+    });
 }
 
 app.UseHttpsRedirection();
@@ -127,4 +210,11 @@ static RsaSecurityKey CreateRsaSecurityKey(string pem)
     var rsa = RSA.Create();
     rsa.ImportFromPem(pem);
     return new RsaSecurityKey(rsa);
+}
+
+static Task WriteJsonAsync(HttpContext context, ApiResponse<object> response)
+{
+    context.Response.ContentType = MediaTypeNames.Application.Json;
+    string payload = JsonSerializer.Serialize(response, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+    return context.Response.WriteAsync(payload);
 }

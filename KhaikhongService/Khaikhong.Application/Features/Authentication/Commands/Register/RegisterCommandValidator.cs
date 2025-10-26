@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using FluentValidation;
 
 namespace Khaikhong.Application.Features.Authentication.Commands.Register;
@@ -23,5 +25,11 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
         RuleFor(x => x.Request.LastName)
             .NotEmpty()
             .MaximumLength(100);
+
+        RuleFor(x => x.Request.Role)
+            .NotEmpty().WithMessage("Role is required.")
+            .Must(role => new[] { "User", "Admin" }
+                .Contains(role, StringComparer.OrdinalIgnoreCase))
+            .WithMessage("Role must be either 'User' or 'Admin'.");
     }
 }

@@ -4,7 +4,8 @@ using Khaikhong.Application.Contracts.Persistence;
 using Khaikhong.Application.Contracts.Persistence.Repositories;
 using Khaikhong.Application.Contracts.Services;
 using Khaikhong.Application.Features.Authentication.Dtos;
-using Khaikhong.Domain.Entities;
+using Khaikhong.Domain.Enums;
+using DomainUser = Khaikhong.Domain.Entities.User;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -30,22 +31,36 @@ public sealed class RegisterCommandHandler(
     {
         RegisterRequestDto payload = request.Request;
 
-        User? existingUser = await userRepository.GetByEmailAsync(payload.Email);
+        DomainUser? existingUser = await userRepository.GetByEmailAsync(payload.Email);
         if (existingUser is not null)
         {
             _logger.LogWarning("Registration blocked for existing email {Email}", payload.Email);
             return ApiResponse<RegisterResponseDto>.Fail(
-                400,
-                "Validation failed",
-                new RegisterResponseDto()
+                status: 400,
+                message: "Validation failed",
+                errors: new[]
                 {
-                    Message = "Email already exists"
+                    new { field = "Email", error = "Email already exists" }
                 });
         }
 
-        User user = _mapper.Map<User>(payload);
+        if (!IsRoleAllowed(payload.Role))
+        {
+            _logger.LogWarning("Registration blocked for invalid role {Role} on email {Email}", payload.Role, payload.Email);
+            return ApiResponse<RegisterResponseDto>.Fail(
+                status: 400,
+                message: "Validation failed",
+                errors: new[]
+                {
+                    new { field = "Role", error = "Invalid role. Allowed values: Admin, User" }
+                });
+        }
+
+        UserRole targetRole = Enum.Parse<UserRole>(payload.Role, true);
+        DomainUser user = _mapper.Map<DomainUser>(payload);
         string passwordHash = _passwordHasher.HashPassword(payload.Password);
         user.SetPasswordHash(passwordHash);
+        user.UpdateRole(targetRole);
 
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.CompleteAsync();
@@ -56,4 +71,9 @@ public sealed class RegisterCommandHandler(
 
         return ApiResponse<RegisterResponseDto>.Success(200, "Register successful", response);
     }
+
+    private static bool IsRoleAllowed(string role) =>
+        !string.IsNullOrWhiteSpace(role)
+        && (string.Equals(role, "User", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase));
 }

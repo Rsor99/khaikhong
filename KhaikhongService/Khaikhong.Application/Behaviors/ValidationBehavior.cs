@@ -39,47 +39,29 @@ public sealed class ValidationBehavior<TRequest, TResponse>(
 
     private static TResponse CreateFailureResponse(IEnumerable<ValidationFailure> failures)
     {
-        ValidationError[] errors = failures
-            .Select(failure => new ValidationError(failure.PropertyName, failure.ErrorMessage))
-            .ToArray();
-
-        object payload = new { errors };
-
         Type responseType = typeof(TResponse);
-
-        if (responseType == typeof(ApiResponse<object>))
-        {
-            return (TResponse)(object)ApiResponse<object>.Fail(
-                status: 400,
-                message: "Validation failed",
-                data: payload);
-        }
 
         if (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(ApiResponse<>))
         {
+            object errorPayload = failures
+                .Select(failure => new ValidationError(failure.PropertyName, failure.ErrorMessage))
+                .ToArray();
+
             Type dataType = responseType.GenericTypeArguments[0];
-            Type apiResponseType = typeof(ApiResponse<>).MakeGenericType(dataType);
+            MethodInfo factory = typeof(ValidationBehavior<TRequest, TResponse>)
+                .GetMethod(nameof(CreateFailureResponseInternal), BindingFlags.NonPublic | BindingFlags.Static)!
+                .MakeGenericMethod(dataType);
 
-            MethodInfo? failMethod = apiResponseType.GetMethod(
-                nameof(ApiResponse<object>.Fail),
-                [typeof(int), typeof(string), typeof(object)]);
-
-            if (failMethod is not null)
-            {
-                object? failureResponse = failMethod.Invoke(
-                    obj: null,
-                    parameters: [400, "Validation failed", payload]);
-
-                if (failureResponse is TResponse typedResponse)
-                {
-                    return typedResponse;
-                }
-            }
+            object result = factory.Invoke(null, [errorPayload])!;
+            return (TResponse)result;
         }
 
         throw new InvalidOperationException(
             $"ValidationBehavior requires MediatR handlers to return ApiResponse<T>. Actual type: '{responseType}'.");
     }
 
-    private sealed record ValidationError(string Field, string Message);
+    private static ApiResponse<TData> CreateFailureResponseInternal<TData>(object errors) =>
+        ApiResponse<TData>.Fail(status: 400, message: "Validation failed", errors: errors);
+
+    private sealed record ValidationError(string Field, string Error);
 }

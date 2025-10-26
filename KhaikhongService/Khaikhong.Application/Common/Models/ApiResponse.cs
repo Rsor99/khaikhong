@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Khaikhong.Application.Common.Models;
 
 public sealed class ApiResponse<T>
@@ -6,39 +8,26 @@ public sealed class ApiResponse<T>
 
     public string Message { get; }
 
-    public T Data { get; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public T? Data { get; }
 
-    private ApiResponse(int status, string message, T data)
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public object? Errors { get; }
+
+    public bool IsSuccess { get; }
+
+    private ApiResponse(int status, string message, bool isSuccess, T? data, object? errors)
     {
         Status = status;
         Message = message;
+        IsSuccess = isSuccess;
         Data = data;
+        Errors = errors;
     }
 
     public static ApiResponse<T> Success(int status, string message, T data) =>
-        new(status, message, data);
+        new(status, message, true, data, null);
 
-    public static ApiResponse<T> Fail(int status, string message, object? data = null)
-    {
-        T payload;
-
-        if (data is null)
-        {
-            payload = typeof(T).IsValueType ? Activator.CreateInstance<T>() : default!;
-        }
-        else if (data is T typedData)
-        {
-            payload = typedData;
-        }
-        else if (typeof(T).IsAssignableFrom(data.GetType()))
-        {
-            payload = (T)data;
-        }
-        else
-        {
-            throw new InvalidCastException($"Cannot convert data of type '{data.GetType()}' to '{typeof(T)}'.");
-        }
-
-        return new ApiResponse<T>(status, message, payload);
-    }
+    public static ApiResponse<T> Fail(int status, string message, object? errors = null, T? data = default) =>
+        new(status, message, false, data, errors);
 }

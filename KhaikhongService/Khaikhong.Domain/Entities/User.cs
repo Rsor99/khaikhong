@@ -47,5 +47,11 @@ namespace Khaikhong.Domain.Entities
             PasswordHash = passwordHash;
             Touch();
         }
+
+        public void UpdateRole(UserRole role)
+        {
+            Role = role;
+            Touch();
+        }
     }
 }

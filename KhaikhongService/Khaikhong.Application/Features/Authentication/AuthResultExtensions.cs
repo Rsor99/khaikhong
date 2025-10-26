@@ -12,7 +12,7 @@ internal static class AuthResultExtensions
 
         return isSuccess
             ? ApiResponse<object>.Success(result.Status, result.Message, data)
-            : ApiResponse<object>.Fail(result.Status, result.Message, data);
+            : ApiResponse<object>.Fail(result.Status, result.Message, errors: data);
     }
 
     private static object BuildData(AuthResultData data)

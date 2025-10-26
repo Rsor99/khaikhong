@@ -127,7 +127,17 @@ JWTSETTINGS__PUBLICKEYBASE64=PFJFUExBQ0VfV0lUSF9CQVNFMjRfRU5DT0RFRF9QVUJMSUNfS0V
 - Readability over cleverness—the code is written for humans first, preferring meaningful names and straightforward structure.
 - New files must declare only the using directives they truly depend on—avoid adding redundant imports (e.g., `System`) when implicit usings already cover them.
 
+## Coding Principles
+- **Primary Constructor Injection** — 
+  Always use primary constructor syntax for dependency injection in controllers and handlers:
+  ```csharp
+  public class UserController(IMediator mediator) : ControllerBase
+  ```
+  Avoid field injection or property injection.
+  This ensures immutability, cleaner syntax, and consistency with C# 12 modern practices.
+
 ### Response Contract Standardization
 - Every controller action returns `ApiResponse<T>` from `Khaikhong.Application.Common.Models`, ensuring consistent `{ status, message, data }` envelopes across success, validation errors, and unexpected failures.
 - MediatR handlers compose domain/application results into `ApiResponse<T>` helpers (`Success` / `Fail`) so HTTP concerns remain outside core logic.
 - Validation behavior and global exception middleware rely on this wrapper to deliver deterministic payloads to clients.
+- Capture example payloads directly in Swagger example providers when adding new endpoints; AGENTS.md should remain high-level.

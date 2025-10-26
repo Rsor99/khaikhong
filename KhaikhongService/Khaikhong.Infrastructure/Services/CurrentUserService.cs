@@ -1,6 +1,4 @@
-using System;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using Khaikhong.Application.Contracts.Services;
 using Microsoft.AspNetCore.Http;

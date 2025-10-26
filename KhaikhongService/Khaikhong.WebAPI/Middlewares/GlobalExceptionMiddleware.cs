@@ -34,8 +34,8 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
 
         ApiResponse<object> response = ApiResponse<object>.Fail(
             status: StatusCodes.Status500InternalServerError,
-            message: "Internal Server Error",
-            data: new { message = "Something went wrong." });
+            message: "An unexpected error occurred",
+            errors: new { message = "Something went wrong." });
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));
     }

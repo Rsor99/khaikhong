@@ -9,8 +9,13 @@ using Khaikhong.Application.Features.Authentication.Commands.Register;
 using Khaikhong.Application.Features.Authentication.Dtos;
 using Khaikhong.Application.Models.Requests;
 using Khaikhong.Infrastructure.Authentication;
+using Khaikhong.WebAPI.Swagger.Examples.Authentication;
+using Khaikhong.WebAPI.Swagger.Examples.Common;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace Khaikhong.WebAPI.Controllers;
 
@@ -21,6 +26,17 @@ public sealed class AuthController(IMediator mediator, JwtSettings jwtSettings) 
     private const string RefreshTokenCookieName = "refreshToken";
 
     [HttpPost("register")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<RegisterResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<RegisterResponseDto>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseExample(StatusCodes.Status200OK, typeof(RegisterSuccessResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(RegisterValidationFailureResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status401Unauthorized, typeof(UnauthorizedResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status403Forbidden, typeof(ForbiddenResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
         ApiResponse<RegisterResponseDto> response = await mediator.Send(new RegisterCommand(request));
@@ -28,6 +44,17 @@ public sealed class AuthController(IMediator mediator, JwtSettings jwtSettings) 
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseExample(StatusCodes.Status200OK, typeof(LoginSuccessResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(AuthenticationValidationFailureResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status401Unauthorized, typeof(UnauthorizedResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status403Forbidden, typeof(ForbiddenResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         ApiResponse<object> response = await mediator.Send(new LoginCommand(request.Email, request.Password));
@@ -45,6 +72,17 @@ public sealed class AuthController(IMediator mediator, JwtSettings jwtSettings) 
     }
 
     [HttpPost("refresh")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseExample(StatusCodes.Status200OK, typeof(RefreshSuccessResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(RefreshValidationFailureResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status401Unauthorized, typeof(UnauthorizedResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status403Forbidden, typeof(ForbiddenResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     public async Task<IActionResult> Refresh()
     {
         if (!TryGetRefreshTokenCookie(out string? refreshToken))
@@ -68,6 +106,17 @@ public sealed class AuthController(IMediator mediator, JwtSettings jwtSettings) 
     }
 
     [HttpPost("logout")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseExample(StatusCodes.Status200OK, typeof(LogoutSuccessResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(LogoutValidationFailureResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status401Unauthorized, typeof(UnauthorizedResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status403Forbidden, typeof(ForbiddenResponseExample))]
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     public async Task<IActionResult> Logout()
     {
         if (!TryGetRefreshTokenCookie(out string? refreshToken))
@@ -145,5 +194,5 @@ public sealed class AuthController(IMediator mediator, JwtSettings jwtSettings) 
     }
 
     private static ApiResponse<object> BuildMissingRefreshTokenResponse() =>
-        ApiResponse<object>.Fail(400, "Validation failed", new { message = "Refresh token cookie is missing" });
+        ApiResponse<object>.Fail(400, "Validation failed", errors: new { message = "Refresh token cookie is missing" });
 }
