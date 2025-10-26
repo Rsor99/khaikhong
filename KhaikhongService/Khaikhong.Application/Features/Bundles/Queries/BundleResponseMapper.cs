@@ -31,10 +31,7 @@ internal static class BundleResponseMapper
     {
         BundleItem sample = group.First();
         Product? product = sample.Product ?? sample.Variant?.Product;
-        if (product is null)
-        {
-            throw new InvalidOperationException("Bundle item is missing associated product data.");
-        }
+        string productName = product?.Name ?? string.Empty;
 
         int baseQuantity = group
             .Where(item => !item.VariantId.HasValue)
@@ -57,7 +54,7 @@ internal static class BundleResponseMapper
         return new BundleResponseProductDto
         {
             ProductId = group.Key,
-            Name = product.Name,
+            Name = productName,
             Quantity = quantity,
             Variants = variants
         };

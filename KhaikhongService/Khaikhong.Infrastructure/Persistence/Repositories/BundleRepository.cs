@@ -99,6 +99,29 @@ public sealed class BundleRepository(KhaikhongDbContext context) : IBundleReposi
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<Bundle?> GetDetailedByIdTrackingAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Bundles
+            .Where(bundle => bundle.Id == id && bundle.IsActive)
+            .Include(bundle => bundle.Items)
+                .ThenInclude(item => item.Product)
+            .Include(bundle => bundle.Items)
+                .ThenInclude(item => item.Variant)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<Bundle?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Bundles
+            .Include(bundle => bundle.Items)
+                .ThenInclude(item => item.Product)
+            .Include(bundle => bundle.Items)
+                .ThenInclude(item => item.Variant)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(bundle => bundle.Id == id, cancellationToken);
+    }
+
     private static bool IsBulkStatsMismatch(MySqlException exception) =>
         exception.Message.Contains("were copied", StringComparison.OrdinalIgnoreCase)
         && exception.Message.Contains("were inserted", StringComparison.OrdinalIgnoreCase);

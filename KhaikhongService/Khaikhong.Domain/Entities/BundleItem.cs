@@ -59,4 +59,9 @@ public sealed class BundleItem
     {
         IsActive = false;
     }
+
+    public void Activate()
+    {
+        IsActive = true;
+    }
 }

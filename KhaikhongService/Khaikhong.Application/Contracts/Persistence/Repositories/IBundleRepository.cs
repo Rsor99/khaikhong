@@ -17,4 +17,8 @@ public interface IBundleRepository
     Task<List<Bundle>> GetAllDetailedAsync(CancellationToken cancellationToken = default);
 
     Task<Bundle?> GetDetailedByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<Bundle?> GetDetailedByIdTrackingAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<Bundle?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 }
