@@ -2,7 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Security.Claims;
 using Khaikhong.Application.Common.Models;
-using Khaikhong.Application.Features.Authentication;
+using Khaikhong.Application.Features.Authentication.Commands.Login;
+using Khaikhong.Application.Features.Authentication.Commands.Logout;
+using Khaikhong.Application.Features.Authentication.Commands.RefreshToken;
 using Khaikhong.Application.Features.Authentication.Commands.Register;
 using Khaikhong.Application.Features.Authentication.Dtos;
 using Khaikhong.Application.Models.Requests;
@@ -17,20 +19,18 @@ namespace Khaikhong.WebAPI.Controllers;
 public sealed class AuthController(IMediator mediator, JwtSettings jwtSettings) : ControllerBase
 {
     private const string RefreshTokenCookieName = "refreshToken";
-    private readonly IMediator _mediator = mediator;
-    private readonly JwtSettings _jwtSettings = jwtSettings;
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
-        ApiResponse<RegisterResponseDto> response = await _mediator.Send(new RegisterCommand(request));
+        ApiResponse<RegisterResponseDto> response = await mediator.Send(new RegisterCommand(request));
         return StatusCode(response.Status, response);
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        ApiResponse<object> response = await _mediator.Send(new LoginCommand(request.Email, request.Password));
+        ApiResponse<object> response = await mediator.Send(new LoginCommand(request.Email, request.Password));
 
         if (response.Status is >= 200 and < 400)
         {
@@ -53,7 +53,7 @@ public sealed class AuthController(IMediator mediator, JwtSettings jwtSettings) 
             return StatusCode(missingCookieResponse.Status, missingCookieResponse);
         }
 
-        ApiResponse<object> response = await _mediator.Send(new RefreshTokenCommand(refreshToken ?? ""));
+        ApiResponse<object> response = await mediator.Send(new RefreshTokenCommand(refreshToken ?? ""));
 
         if (response.Status is >= 200 and < 400)
         {
@@ -77,7 +77,7 @@ public sealed class AuthController(IMediator mediator, JwtSettings jwtSettings) 
         }
 
         Guid? userId = ResolveUserId();
-        ApiResponse<object> response = await _mediator.Send(new LogoutCommand(userId, refreshToken ?? ""));
+        ApiResponse<object> response = await mediator.Send(new LogoutCommand(userId, refreshToken ?? ""));
 
         if (response.Status is >= 200 and < 400)
         {
@@ -132,7 +132,7 @@ public sealed class AuthController(IMediator mediator, JwtSettings jwtSettings) 
 
     private CookieOptions BuildCookieOptions()
     {
-        DateTimeOffset expires = DateTimeOffset.UtcNow.AddDays(Math.Max(_jwtSettings.RefreshTokenDays, 1));
+        DateTimeOffset expires = DateTimeOffset.UtcNow.AddDays(Math.Max(jwtSettings.RefreshTokenDays, 1));
 
         return new CookieOptions
         {

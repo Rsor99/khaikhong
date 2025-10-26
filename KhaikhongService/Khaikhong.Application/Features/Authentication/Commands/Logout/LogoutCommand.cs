@@ -3,15 +3,13 @@ using Khaikhong.Application.Contracts.Services;
 using Khaikhong.Application.Contracts.Services.Models;
 using MediatR;
 
-namespace Khaikhong.Application.Features.Authentication;
+namespace Khaikhong.Application.Features.Authentication.Commands.Logout;
 
 public sealed record LogoutCommand(Guid? UserId, string RefreshToken) : IRequest<ApiResponse<object>>;
 
 public sealed class LogoutCommandHandler(IAuthenticationService authenticationService)
     : IRequestHandler<LogoutCommand, ApiResponse<object>>
 {
-    private readonly IAuthenticationService _authenticationService = authenticationService;
-
     public async Task<ApiResponse<object>> Handle(LogoutCommand request, CancellationToken cancellationToken)
     {
         if (request.UserId is null)
@@ -19,7 +17,7 @@ public sealed class LogoutCommandHandler(IAuthenticationService authenticationSe
             return AuthResult.Unauthorized("User is not authenticated").ToApiResponse();
         }
 
-        await _authenticationService.LogoutAsync(request.UserId.Value, request.RefreshToken);
+        await authenticationService.LogoutAsync(request.UserId.Value, request.RefreshToken);
 
         var result = new AuthResult
         {
