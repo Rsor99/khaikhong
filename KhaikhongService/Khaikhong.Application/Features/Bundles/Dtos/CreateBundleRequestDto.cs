@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Khaikhong.Application.Features.Bundles.Dtos;
 
 public sealed record CreateBundleRequestDto
@@ -11,14 +8,9 @@ public sealed record CreateBundleRequestDto
 
     public decimal Price { get; init; }
 
-    public IReadOnlyCollection<BundleProductDto> Products { get; init; } = Array.Empty<BundleProductDto>();
+    public IReadOnlyCollection<CreateBundleProductDto> Products { get; init; } = Array.Empty<CreateBundleProductDto>();
 }
 
-public sealed record BundleProductDto
-{
-    public Guid ProductId { get; init; }
+public sealed record CreateBundleProductDto(Guid ProductId, List<CreateBundleVariantDto>? Variants, int? Quantity);
 
-    public IReadOnlyCollection<Guid>? Variants { get; init; }
-
-    public int Quantity { get; init; } = 1;
-}
+public sealed record CreateBundleVariantDto(Guid VariantId, int Quantity);

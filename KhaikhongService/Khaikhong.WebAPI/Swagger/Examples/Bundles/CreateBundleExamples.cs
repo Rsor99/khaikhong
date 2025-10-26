@@ -57,22 +57,21 @@ public sealed class CreateBundleRequestExample : IExamplesProvider<CreateBundleR
         Name = "Eco Starter Kit",
         Description = "A beginner-friendly sustainability bundle",
         Price = 1290m,
-        Products = new List<BundleProductDto>
+        Products = new List<CreateBundleProductDto>
         {
-            new()
-            {
-                ProductId = Guid.Parse("019a1f40-3e0c-7bb1-a5a9-d4def7146873"),
-                Quantity = 1
-            },
-            new()
-            {
-                ProductId = Guid.Parse("019a1cb4-f2db-7559-bf61-5d23ee22516e"),
-                Quantity = 1,
-                Variants = new List<Guid>
+            new(
+                ProductId: Guid.Parse("019a1f40-3e0c-7bb1-a5a9-d4def7146873"),
+                Variants: null,
+                Quantity: 1),
+            new(
+                ProductId: Guid.Parse("019a1cb4-f2db-7559-bf61-5d23ee22516e"),
+                Variants: new List<CreateBundleVariantDto>
                 {
-                    Guid.Parse("019a1f40-aaaa-bbbb-cccc-d4def7142222")
-                }
-            }
+                    new(
+                        VariantId: Guid.Parse("019a1f40-aaaa-bbbb-cccc-d4def7142222"),
+                        Quantity: 1)
+                },
+                Quantity: null)
         }
     };
 }

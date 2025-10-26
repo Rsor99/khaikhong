@@ -39,7 +39,7 @@ public sealed class CreateBundleCommandHandlerTests
             Name = "Eco Starter Kit",
             Description = "A beginner-friendly sustainability bundle",
             Price = 1290m,
-            Products = Array.Empty<BundleProductDto>()
+            Products = Array.Empty<CreateBundleProductDto>()
         };
 
         CreateBundleCommandHandler handler = BuildHandler();
@@ -84,14 +84,12 @@ public sealed class CreateBundleCommandHandlerTests
             Name = "Eco Starter Kit",
             Description = "A beginner-friendly sustainability bundle",
             Price = 1290m,
-            Products = new List<BundleProductDto>
+            Products = new List<CreateBundleProductDto>
             {
-                new()
+                new(productId, new List<CreateBundleVariantDto>
                 {
-                    ProductId = productId,
-                    Quantity = 1,
-                    Variants = new List<Guid> { variantId }
-                }
+                    new(variantId, 1)
+                }, null)
             }
         };
 
@@ -123,20 +121,13 @@ public sealed class CreateBundleCommandHandlerTests
             Name = "Eco Starter Kit",
             Description = "A beginner-friendly sustainability bundle",
             Price = 1290m,
-            Products = new List<BundleProductDto>
+            Products = new List<CreateBundleProductDto>
             {
-                new()
+                new(productId1, null, 1),
+                new(productId2, new List<CreateBundleVariantDto>
                 {
-                    ProductId = productId1,
-                    Quantity = 1,
-                    Variants = null
-                },
-                new()
-                {
-                    ProductId = productId2,
-                    Quantity = 2,
-                    Variants = new List<Guid> { variantId }
-                }
+                    new(variantId, 2)
+                }, null)
             }
         };
 
@@ -190,6 +181,79 @@ public sealed class CreateBundleCommandHandlerTests
         _unitOfWork.Verify(unit => unit.CompleteAsync(), Times.Exactly(2));
     }
 
+    [Fact]
+    public async Task Handle_ShouldReturnValidationError_WhenQuantityMissingForNonVariantProduct()
+    {
+        Guid productId = Guid.Parse("019a1f40-3e0c-7bb1-a5a9-d4def7146873");
+
+        CreateBundleRequestDto request = new()
+        {
+            Name = "Eco Starter Kit",
+            Description = "A beginner-friendly sustainability bundle",
+            Price = 1290m,
+            Products = new List<CreateBundleProductDto>
+            {
+                new(productId, null, null)
+            }
+        };
+
+        _productRepository
+            .Setup(repo => repo.AreProductsActiveAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _productRepository
+            .Setup(repo => repo.GetActiveVariantsForProductsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<Guid>>());
+
+        CreateBundleCommandHandler handler = BuildHandler();
+
+        ApiResponse<CreateBundleResponseDto> response = await handler.Handle(new CreateBundleCommand(request), CancellationToken.None);
+
+        Assert.False(response.IsSuccess);
+        Assert.Equal(400, response.Status);
+        _bundleRepository.Verify(repo => repo.AddAsync(It.IsAny<Bundle>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnValidationError_WhenVariantQuantityInvalid()
+    {
+        Guid productId = Guid.Parse("019a1cb4-f2db-7559-bf61-5d23ee22516e");
+        Guid variantId = Guid.Parse("019a1f40-aaaa-bbbb-cccc-d4def7142222");
+
+        CreateBundleRequestDto request = new()
+        {
+            Name = "Eco Starter Kit",
+            Description = "A beginner-friendly sustainability bundle",
+            Price = 1290m,
+            Products = new List<CreateBundleProductDto>
+            {
+                new(productId, new List<CreateBundleVariantDto>
+                {
+                    new(variantId, 0)
+                }, null)
+            }
+        };
+
+        _productRepository
+            .Setup(repo => repo.AreProductsActiveAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _productRepository
+            .Setup(repo => repo.GetActiveVariantsForProductsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<Guid>>
+            {
+                [productId] = new List<Guid> { variantId }
+            });
+
+        CreateBundleCommandHandler handler = BuildHandler();
+
+        ApiResponse<CreateBundleResponseDto> response = await handler.Handle(new CreateBundleCommand(request), CancellationToken.None);
+
+        Assert.False(response.IsSuccess);
+        Assert.Equal(400, response.Status);
+        _bundleRepository.Verify(repo => repo.AddAsync(It.IsAny<Bundle>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     private CreateBundleCommandHandler BuildHandler() => new(
         _bundleRepository.Object,
         _productRepository.Object,
@@ -207,20 +271,13 @@ public sealed class CreateBundleCommandHandlerTests
             Name = "Eco Starter Kit",
             Description = "A beginner-friendly sustainability bundle",
             Price = 1290m,
-            Products = new List<BundleProductDto>
+            Products = new List<CreateBundleProductDto>
             {
-                new()
+                new(productId1, null, 1),
+                new(productId2, new List<CreateBundleVariantDto>
                 {
-                    ProductId = productId1,
-                    Quantity = 1,
-                    Variants = null
-                },
-                new()
-                {
-                    ProductId = productId2,
-                    Quantity = 2,
-                    Variants = new List<Guid> { variantId }
-                }
+                    new(variantId, 2)
+                }, null)
             }
         };
     }

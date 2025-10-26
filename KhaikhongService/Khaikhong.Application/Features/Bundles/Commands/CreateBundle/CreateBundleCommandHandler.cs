@@ -67,6 +67,15 @@ public sealed class CreateBundleCommandHandler(
         IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>> variantLookup =
             await _productRepository.GetActiveVariantsForProductsAsync(productIds, cancellationToken);
 
+        List<object> quantityErrors = CollectQuantityErrors(payload.Products);
+        if (quantityErrors.Count > 0)
+        {
+            return ApiResponse<CreateBundleResponseDto>.Fail(
+                status: 400,
+                message: "Validation failed",
+                errors: quantityErrors.ToArray());
+        }
+
         List<object> variantErrors = CollectVariantErrors(payload.Products, variantLookup);
         if (variantErrors.Count > 0)
         {
@@ -78,7 +87,7 @@ public sealed class CreateBundleCommandHandler(
 
         Bundle bundle = Bundle.Create(payload.Name, payload.Price, payload.Description);
 
-        IList<BundleItem> items = BuildBundleItems(bundle.Id, payload.Products, variantLookup);
+        IList<BundleItem> items = BuildBundleItems(bundle.Id, payload.Products);
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
@@ -130,39 +139,35 @@ public sealed class CreateBundleCommandHandler(
 
     private static IList<BundleItem> BuildBundleItems(
         Guid bundleId,
-        IReadOnlyCollection<BundleProductDto> products,
-        IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>> variantLookup)
+        IReadOnlyCollection<CreateBundleProductDto> products)
     {
         List<BundleItem> items = new();
 
-        foreach (BundleProductDto dto in products)
+        foreach (CreateBundleProductDto dto in products)
         {
-            IReadOnlyCollection<Guid> validVariants = variantLookup.TryGetValue(dto.ProductId, out IReadOnlyCollection<Guid>? variants)
-                ? variants
-                : Array.Empty<Guid>();
-
-            if (dto.Variants is null || dto.Variants.Count == 0)
+            if (dto.Variants is not null && dto.Variants.Count > 0)
             {
-                items.Add(BundleItem.Create(bundleId, dto.Quantity, productId: dto.ProductId));
+                foreach (CreateBundleVariantDto variant in dto.Variants)
+                {
+                    items.Add(BundleItem.Create(bundleId, variant.Quantity, dto.ProductId, variant.VariantId));
+                }
+
                 continue;
             }
 
-            foreach (Guid variantId in dto.Variants)
-            {
-                items.Add(BundleItem.Create(bundleId, dto.Quantity, dto.ProductId, variantId));
-            }
+            items.Add(BundleItem.Create(bundleId, dto.Quantity!.Value, dto.ProductId));
         }
 
         return items;
     }
 
     private static List<object> CollectVariantErrors(
-        IReadOnlyCollection<BundleProductDto> products,
+        IReadOnlyCollection<CreateBundleProductDto> products,
         IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>> variantLookup)
     {
         List<object> errors = new();
 
-        foreach (BundleProductDto dto in products)
+        foreach (CreateBundleProductDto dto in products)
         {
             if (dto.Variants is null || dto.Variants.Count == 0)
             {
@@ -171,12 +176,12 @@ public sealed class CreateBundleCommandHandler(
 
             if (!variantLookup.TryGetValue(dto.ProductId, out IReadOnlyCollection<Guid>? validVariants))
             {
-                foreach (Guid variantId in dto.Variants)
+                foreach (CreateBundleVariantDto variant in dto.Variants)
                 {
                     errors.Add(new
                     {
                         field = "request.products",
-                        error = $"Variant {variantId} is not active for product {dto.ProductId}."
+                        error = $"Variant {variant.VariantId} is not active for product {dto.ProductId}."
                     });
                 }
 
@@ -187,14 +192,50 @@ public sealed class CreateBundleCommandHandler(
                 ? hash
                 : new HashSet<Guid>(validVariants);
 
-            foreach (Guid variantId in dto.Variants)
+            foreach (CreateBundleVariantDto variant in dto.Variants)
             {
-                if (!variantSet.Contains(variantId))
+                if (!variantSet.Contains(variant.VariantId))
                 {
                     errors.Add(new
                     {
                         field = "request.products",
-                        error = $"Variant {variantId} is not active for product {dto.ProductId}."
+                        error = $"Variant {variant.VariantId} is not active for product {dto.ProductId}."
+                    });
+                }
+            }
+        }
+
+        return errors;
+    }
+
+    private static List<object> CollectQuantityErrors(IReadOnlyCollection<CreateBundleProductDto> products)
+    {
+        List<object> errors = new();
+
+        foreach (CreateBundleProductDto dto in products)
+        {
+            if (dto.Variants is null || dto.Variants.Count == 0)
+            {
+                if (!dto.Quantity.HasValue || dto.Quantity.Value <= 0)
+                {
+                    errors.Add(new
+                    {
+                        field = "request.products",
+                        error = $"Quantity must be greater than zero for product {dto.ProductId} when no variants are specified."
+                    });
+                }
+
+                continue;
+            }
+
+            foreach (CreateBundleVariantDto variant in dto.Variants)
+            {
+                if (variant.Quantity <= 0)
+                {
+                    errors.Add(new
+                    {
+                        field = "request.products",
+                        error = $"Variant {variant.VariantId} must have a quantity greater than zero for product {dto.ProductId}."
                     });
                 }
             }
