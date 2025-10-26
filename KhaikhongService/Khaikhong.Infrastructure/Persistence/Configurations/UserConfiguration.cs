@@ -11,7 +11,7 @@ namespace Khaikhong.Infrastructure.Persistence.Configurations
         public void Configure(EntityTypeBuilder<User> builder)
         {
             builder.ToTable("users");
-
+            
             //Id Primary key uuid v7
             builder.HasKey(u => u.Id);
             builder.Property(u => u.Id)
