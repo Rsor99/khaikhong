@@ -19,4 +19,10 @@ public interface IProductRepository : IRepository<Product>
     Task<Product?> GetDetailedByIdAsync(Guid productId, CancellationToken cancellationToken = default);
 
     Task<Product?> GetDetailedByIdTrackingAsync(Guid productId, CancellationToken cancellationToken = default);
+
+    Task<bool> AreProductsActiveAsync(IEnumerable<Guid> productIds, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>>> GetActiveVariantsForProductsAsync(
+        IEnumerable<Guid> productIds,
+        CancellationToken cancellationToken = default);
 }

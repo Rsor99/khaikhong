@@ -49,4 +49,13 @@ public sealed class Bundle : AuditableEntity
         Description = description;
         Touch();
     }
+
+    public void AddItems(IEnumerable<BundleItem> items)
+    {
+        if (items == null)
+            throw new ArgumentNullException(nameof(items));
+
+        _items.AddRange(items);
+        Touch();
+    }
 }

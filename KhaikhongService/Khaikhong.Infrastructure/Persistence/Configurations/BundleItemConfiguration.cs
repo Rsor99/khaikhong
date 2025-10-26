@@ -21,7 +21,8 @@ public sealed class BundleItemConfiguration : IEntityTypeConfiguration<BundleIte
             .IsRequired();
 
         builder.Property(item => item.ProductId)
-            .HasColumnName("product_id");
+            .HasColumnName("product_id")
+            .IsRequired();
 
         builder.Property(item => item.VariantId)
             .HasColumnName("variant_id");
@@ -30,6 +31,10 @@ public sealed class BundleItemConfiguration : IEntityTypeConfiguration<BundleIte
             .HasColumnName("quantity")
             .HasDefaultValue(1)
             .IsRequired();
+
+        builder.Property(item => item.IsActive)
+            .HasColumnName("is_active")
+            .HasDefaultValue(true);
 
         builder.HasIndex(item => item.BundleId)
             .HasDatabaseName("idx_bundle_item_bundle_id");

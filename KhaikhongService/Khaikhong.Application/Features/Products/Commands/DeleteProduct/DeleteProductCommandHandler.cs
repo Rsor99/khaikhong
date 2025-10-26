@@ -13,10 +13,12 @@ namespace Khaikhong.Application.Features.Products.Commands.DeleteProduct;
 
 public sealed class DeleteProductCommandHandler(
     IProductRepository productRepository,
+    IBundleRepository bundleRepository,
     IUnitOfWork unitOfWork,
     ILogger<DeleteProductCommandHandler> logger) : IRequestHandler<DeleteProductCommand, ApiResponse<object>>
 {
     private readonly IProductRepository _productRepository = productRepository;
+    private readonly IBundleRepository _bundleRepository = bundleRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ILogger<DeleteProductCommandHandler> _logger = logger;
 
@@ -35,6 +37,17 @@ public sealed class DeleteProductCommandHandler(
                 errors: new[]
                 {
                     new { field = "productId", error = "Product does not exist." }
+                });
+        }
+
+        if (await _bundleRepository.IsProductLinkedAsync(request.ProductId, cancellationToken))
+        {
+            return ApiResponse<object>.Fail(
+                status: 400,
+                message: "Validation failed",
+                errors: new[]
+                {
+                    new { field = "productId", error = "Product is linked to one or more bundles. Unlink them before deletion." }
                 });
         }
 

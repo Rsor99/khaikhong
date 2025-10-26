@@ -15,6 +15,7 @@ namespace Khaikhong.Tests.Features.Products.Commands.DeleteProduct;
 public sealed class DeleteProductCommandHandlerTests
 {
     private readonly Mock<IProductRepository> _productRepository = new();
+    private readonly Mock<IBundleRepository> _bundleRepository = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<ILogger<DeleteProductCommandHandler>> _logger = new();
 
@@ -55,6 +56,10 @@ public sealed class DeleteProductCommandHandlerTests
             .Setup(repo => repo.GetDetailedByIdTrackingAsync(productId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(product);
 
+        _bundleRepository
+            .Setup(repo => repo.IsProductLinkedAsync(productId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
         DeleteProductCommandHandler handler = BuildHandler();
 
         ApiResponse<object> response = await handler.Handle(new DeleteProductCommand(productId), CancellationToken.None);
@@ -68,8 +73,32 @@ public sealed class DeleteProductCommandHandlerTests
         _unitOfWork.Verify(unit => unit.CompleteAsync(), Times.Once);
     }
 
+    [Fact]
+    public async Task Handle_ShouldReturnValidationError_WhenProductLinkedToBundle()
+    {
+        Product product = BuildProduct();
+        Guid productId = product.Id;
+
+        _productRepository
+            .Setup(repo => repo.GetDetailedByIdTrackingAsync(productId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(product);
+
+        _bundleRepository
+            .Setup(repo => repo.IsProductLinkedAsync(productId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        DeleteProductCommandHandler handler = BuildHandler();
+
+        ApiResponse<object> response = await handler.Handle(new DeleteProductCommand(productId), CancellationToken.None);
+
+        Assert.False(response.IsSuccess);
+        Assert.Equal(400, response.Status);
+        _unitOfWork.Verify(unit => unit.CompleteAsync(), Times.Never);
+    }
+
     private DeleteProductCommandHandler BuildHandler() => new(
         _productRepository.Object,
+        _bundleRepository.Object,
         _unitOfWork.Object,
         _logger.Object);
 

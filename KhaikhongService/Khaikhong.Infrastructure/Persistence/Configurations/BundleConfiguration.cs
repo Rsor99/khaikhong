@@ -30,22 +30,22 @@ public sealed class BundleConfiguration : IEntityTypeConfiguration<Bundle>
             .HasPrecision(12, 2)
             .IsRequired();
 
-        builder.Property(bundle => bundle.CreatedBy)
-            .HasColumnName("created_by");
+        // builder.Property(bundle => bundle.CreatedBy)
+        //     .HasColumnName("created_by");
 
-        builder.Property(bundle => bundle.UpdatedBy)
-            .HasColumnName("updated_by");
+        // builder.Property(bundle => bundle.UpdatedBy)
+        //     .HasColumnName("updated_by");
 
-        builder.Property(bundle => bundle.CreatedAt)
-            .HasColumnName("created_at")
-            .HasColumnType("datetime(6)")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+        // builder.Property(bundle => bundle.CreatedAt)
+        //     .HasColumnName("created_at")
+        //     .HasColumnType("datetime(6)")
+        //     .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
-        builder.Property(bundle => bundle.UpdatedAt)
-            .HasColumnName("updated_at")
-            .HasColumnType("datetime(6)")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
-            .ValueGeneratedOnAddOrUpdate();
+        // builder.Property(bundle => bundle.UpdatedAt)
+        //     .HasColumnName("updated_at")
+        //     .HasColumnType("datetime(6)")
+        //     .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+        //     .ValueGeneratedOnAddOrUpdate();
 
         builder.Property(bundle => bundle.IsActive)
             .HasColumnName("is_active")
@@ -53,5 +53,10 @@ public sealed class BundleConfiguration : IEntityTypeConfiguration<Bundle>
 
         builder.HasIndex(bundle => bundle.IsActive)
             .HasDatabaseName("idx_bundle_is_active");
+
+        builder.Ignore("CreatedAt");
+        builder.Ignore("UpdatedAt");
+        builder.Ignore("CreatedBy");
+        builder.Ignore("UpdatedBy");
     }
 }

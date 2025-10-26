@@ -12,6 +12,8 @@ public sealed class BundleItem
 
     public int Quantity { get; private set; }
 
+    public bool IsActive { get; private set; } = true;
+
     public Bundle Bundle { get; private set; } = null!;
 
     public Product? Product { get; private set; }
@@ -27,6 +29,11 @@ public sealed class BundleItem
         if (quantity <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero.");
+        }
+
+        if (productId is null && variantId is null)
+        {
+            throw new ArgumentException("Either productId or variantId must be provided.");
         }
 
         return new BundleItem
@@ -46,5 +53,10 @@ public sealed class BundleItem
         }
 
         Quantity = quantity;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
     }
 }

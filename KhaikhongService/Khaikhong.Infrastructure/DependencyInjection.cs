@@ -34,6 +34,7 @@ namespace Khaikhong.Infrastructure
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IBundleRepository, BundleRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             return services;
         }

@@ -160,4 +160,43 @@ public sealed class ProductRepository(KhaikhongDbContext context)
 
         return product;
     }
+
+    public async Task<bool> AreProductsActiveAsync(IEnumerable<Guid> productIds, CancellationToken cancellationToken = default)
+    {
+        Guid[] ids = productIds.Distinct().ToArray();
+
+        if (ids.Length == 0)
+        {
+            return false;
+        }
+
+        int activeCount = await _context.Products
+            .AsNoTracking()
+            .CountAsync(product => product.IsActive && ids.Contains(product.Id), cancellationToken);
+
+        return activeCount == ids.Length;
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<Guid>>> GetActiveVariantsForProductsAsync(
+        IEnumerable<Guid> productIds,
+        CancellationToken cancellationToken = default)
+    {
+        Guid[] ids = productIds.Distinct().ToArray();
+
+        if (ids.Length == 0)
+        {
+            return new Dictionary<Guid, IReadOnlyCollection<Guid>>();
+        }
+
+        Dictionary<Guid, List<Guid>> lookup = await _context.Variants
+            .AsNoTracking()
+            .Where(variant => variant.IsActive && ids.Contains(variant.ProductId))
+            .GroupBy(variant => variant.ProductId)
+            .ToDictionaryAsync(
+                group => group.Key,
+                group => group.Select(variant => variant.Id).ToList(),
+                cancellationToken);
+
+        return lookup.ToDictionary(pair => pair.Key, pair => (IReadOnlyCollection<Guid>)pair.Value);
+    }
 }
