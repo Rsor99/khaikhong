@@ -12,6 +12,8 @@ public sealed class ProductVariantCombination
 
     public VariantOptionValue OptionValue { get; internal set; } = null!;
 
+    public bool IsActive { get; private set; } = true;
+
     private ProductVariantCombination()
     {
     }
@@ -22,4 +24,19 @@ public sealed class ProductVariantCombination
             VariantId = variantId,
             OptionValueId = optionValueId
         };
+
+    public void AttachOptionValue(VariantOptionValue optionValue)
+    {
+        OptionValue = optionValue;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+    }
 }

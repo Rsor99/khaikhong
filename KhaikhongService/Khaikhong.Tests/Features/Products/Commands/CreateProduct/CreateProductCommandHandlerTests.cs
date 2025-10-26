@@ -30,7 +30,7 @@ public sealed class CreateProductCommandHandlerTests
 
         _mapperMock
             .Setup(mapper => mapper.Map<Product>(It.IsAny<CreateProductRequestDto>()))
-            .Returns((CreateProductRequestDto dto) => Product.Create(dto.Name, dto.BasePrice, dto.Description, dto.Sku));
+            .Returns((CreateProductRequestDto dto) => Product.Create(dto.Name, dto.BasePrice, dto.Description, dto.Sku, dto.BaseStock));
 
         _mapperMock
             .Setup(mapper => mapper.Map<CreateProductResponseDto>(It.IsAny<Product>()))
@@ -202,6 +202,7 @@ public sealed class CreateProductCommandHandlerTests
             Description = "Cozy fleece hoodie",
             BasePrice = 79.99m,
             Sku = "HD-001",
+            BaseStock = 120,
             Options = new[]
             {
                 new ProductOptionDto

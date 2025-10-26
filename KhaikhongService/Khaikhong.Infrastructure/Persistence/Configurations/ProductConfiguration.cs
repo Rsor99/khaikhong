@@ -35,6 +35,9 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnName("sku")
             .HasMaxLength(100);
 
+        builder.Property(product => product.BaseStock)
+            .HasColumnName("base_stock");
+
         builder.HasIndex(product => product.Sku)
             .IsUnique();
 

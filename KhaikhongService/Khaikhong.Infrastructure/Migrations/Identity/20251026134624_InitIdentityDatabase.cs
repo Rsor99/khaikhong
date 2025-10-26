@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Khaikhong.Infrastructure.Migrations
+namespace Khaikhong.Infrastructure.Migrations.Identity
 {
     /// <inheritdoc />
-    public partial class InitIdentity : Migration
+    public partial class InitIdentityDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

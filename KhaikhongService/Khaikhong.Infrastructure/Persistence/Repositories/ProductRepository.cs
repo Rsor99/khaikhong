@@ -1,5 +1,7 @@
+using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using EFCore.BulkExtensions;
@@ -74,5 +76,88 @@ public sealed class ProductRepository(KhaikhongDbContext context)
         {
             await _context.BulkInsertAsync(combinations, bulkConfig, cancellationToken: cancellationToken);
         }
+    }
+
+    public async Task<IReadOnlyCollection<Product>> GetAllDetailedAsync(CancellationToken cancellationToken = default)
+    {
+        bool originalDetectChanges = _context.ChangeTracker.AutoDetectChangesEnabled;
+        _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+        try
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+            List<Product> products = await _context.Products
+                .AsNoTracking()
+                .Where(product => product.IsActive)
+                .Include(product => product.Options.Where(option => option.IsActive))
+                    .ThenInclude(option => option.Values.Where(value => value.IsActive))
+                .Include(product => product.Variants.Where(variant => variant.IsActive))
+                    .ThenInclude(variant => variant.Combinations.Where(combination => combination.IsActive))
+                        .ThenInclude(combination => combination.OptionValue)
+                            .ThenInclude(value => value.Option)
+                .AsSplitQuery()
+                .OrderBy(product => product.Name)
+                .ToListAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            return products;
+        }
+        finally
+        {
+            _context.ChangeTracker.AutoDetectChangesEnabled = originalDetectChanges;
+        }
+    }
+
+    public async Task<Product?> GetDetailedByIdAsync(Guid productId, CancellationToken cancellationToken = default)
+    {
+        bool originalDetectChanges = _context.ChangeTracker.AutoDetectChangesEnabled;
+        _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+        try
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+            Product? product = await _context.Products
+                .AsNoTracking()
+                .Where(p => p.IsActive && p.Id == productId)
+                .Include(p => p.Options.Where(option => option.IsActive))
+                    .ThenInclude(option => option.Values.Where(value => value.IsActive))
+                .Include(p => p.Variants.Where(variant => variant.IsActive))
+                    .ThenInclude(variant => variant.Combinations.Where(combination => combination.IsActive))
+                        .ThenInclude(combination => combination.OptionValue)
+                            .ThenInclude(value => value.Option)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            return product;
+        }
+        finally
+        {
+            _context.ChangeTracker.AutoDetectChangesEnabled = originalDetectChanges;
+        }
+    }
+
+    public async Task<Product?> GetDetailedByIdTrackingAsync(Guid productId, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+        Product? product = await _context.Products
+            .Where(p => p.Id == productId && p.IsActive)
+            .Include(p => p.Options)
+                .ThenInclude(option => option.Values)
+            .Include(p => p.Variants)
+                .ThenInclude(variant => variant.Combinations)
+                    .ThenInclude(combination => combination.OptionValue)
+                        .ThenInclude(value => value.Option)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        return product;
     }
 }

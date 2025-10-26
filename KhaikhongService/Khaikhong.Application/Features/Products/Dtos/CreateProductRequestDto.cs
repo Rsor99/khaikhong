@@ -10,6 +10,8 @@ public sealed record CreateProductRequestDto
 
     public string? Sku { get; init; }
 
+    public int? BaseStock { get; init; }
+
     public IReadOnlyCollection<ProductOptionDto> Options { get; init; } = Array.Empty<ProductOptionDto>();
 
     public IReadOnlyCollection<ProductVariantDto> Variants { get; init; } = Array.Empty<ProductVariantDto>();

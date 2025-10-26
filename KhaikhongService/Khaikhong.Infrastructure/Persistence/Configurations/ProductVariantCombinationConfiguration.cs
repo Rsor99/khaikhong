@@ -24,6 +24,10 @@ public sealed class ProductVariantCombinationConfiguration : IEntityTypeConfigur
             .HasColumnName("option_value_id")
             .IsRequired();
 
+        builder.Property(combination => combination.IsActive)
+            .HasColumnName("is_active")
+            .HasDefaultValue(true);
+
         builder.HasIndex(combination => combination.VariantId)
             .HasDatabaseName("idx_variant_combination_variant_id");
 

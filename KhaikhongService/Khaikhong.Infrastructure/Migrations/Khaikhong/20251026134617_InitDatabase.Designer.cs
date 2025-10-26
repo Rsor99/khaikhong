@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Khaikhong.Infrastructure.Migrations.KhaikhongDb
+namespace Khaikhong.Infrastructure.Migrations.Khaikhong
 {
     [DbContext(typeof(KhaikhongDbContext))]
-    [Migration("20251026093208_InitBusiness")]
-    partial class InitBusiness
+    [Migration("20251026134617_InitDatabase")]
+    partial class InitDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -216,6 +216,10 @@ namespace Khaikhong.Infrastructure.Migrations.KhaikhongDb
                         .HasDefaultValue(0m)
                         .HasColumnName("base_price");
 
+                    b.Property<int?>("BaseStock")
+                        .HasColumnType("int")
+                        .HasColumnName("base_stock");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
@@ -275,6 +279,12 @@ namespace Khaikhong.Infrastructure.Migrations.KhaikhongDb
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)")
                         .HasColumnName("id");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
 
                     b.Property<Guid>("OptionValueId")
                         .HasColumnType("char(36)")
@@ -418,6 +428,12 @@ namespace Khaikhong.Infrastructure.Migrations.KhaikhongDb
                         .HasColumnType("char(36)")
                         .HasColumnName("id");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -441,6 +457,12 @@ namespace Khaikhong.Infrastructure.Migrations.KhaikhongDb
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)")
                         .HasColumnName("id");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
 
                     b.Property<Guid>("OptionId")
                         .HasColumnType("char(36)")

@@ -25,6 +25,10 @@ public sealed class VariantOptionConfiguration : IEntityTypeConfiguration<Varian
             .HasMaxLength(100)
             .IsRequired();
 
+        builder.Property(option => option.IsActive)
+            .HasColumnName("is_active")
+            .HasDefaultValue(true);
+
         builder.HasIndex(option => option.ProductId)
             .HasDatabaseName("idx_variant_option_product_id");
 

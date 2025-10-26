@@ -154,6 +154,11 @@ public sealed class CreateProductCommandHandler(
         if (variantAggregates.Count > 0)
         {
             product.AddVariants(variantAggregates);
+            product.SetBaseStock(null);
+        }
+        else
+        {
+            product.SetBaseStock(payload.BaseStock);
         }
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);

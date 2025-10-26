@@ -1,21 +1,27 @@
 using FluentValidation;
 using Khaikhong.Application.Features.Products.Dtos;
 
-namespace Khaikhong.Application.Features.Products.Commands.CreateProduct;
+namespace Khaikhong.Application.Features.Products.Commands.UpdateProduct;
 
-public sealed class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
+public sealed class UpdateProductCommandValidator : AbstractValidator<UpdateProductCommand>
 {
-    public CreateProductCommandValidator()
+    public UpdateProductCommandValidator()
     {
+        RuleFor(command => command.ProductId)
+            .NotEmpty();
+
         RuleFor(command => command.Request)
             .NotNull()
-            .SetValidator(new ProductRequestValidator());
+            .SetValidator(new UpdateProductRequestValidator());
     }
 
-    internal sealed class ProductRequestValidator : AbstractValidator<CreateProductRequestDto>
+    private sealed class UpdateProductRequestValidator : AbstractValidator<UpdateProductRequestDto>
     {
-        public ProductRequestValidator()
+        public UpdateProductRequestValidator()
         {
+            RuleFor(request => request.ProductId)
+                .NotEmpty();
+
             RuleFor(request => request.Name)
                 .NotEmpty()
                 .MaximumLength(255);

@@ -17,6 +17,8 @@ public sealed class Product : AuditableEntity
 
     public string? Sku { get; private set; }
 
+    public int? BaseStock { get; private set; }
+
     public IReadOnlyCollection<VariantOption> Options => _options.AsReadOnly();
 
     public IReadOnlyCollection<Variant> Variants => _variants.AsReadOnly();
@@ -29,13 +31,18 @@ public sealed class Product : AuditableEntity
     {
     }
 
-    public static Product Create(string name, decimal basePrice, string? description = null, string? sku = null)
+    public static Product Create(string name, decimal basePrice, string? description = null, string? sku = null, int? baseStock = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         if (basePrice < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(basePrice), "Base price must be greater than or equal to zero.");
+        }
+
+        if (baseStock is < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(baseStock), "Base stock must be greater than or equal to zero.");
         }
 
         return new Product
@@ -43,11 +50,12 @@ public sealed class Product : AuditableEntity
             Name = name,
             BasePrice = basePrice,
             Description = description,
-            Sku = sku
+            Sku = sku,
+            BaseStock = baseStock
         };
     }
 
-    public void UpdateDetails(string name, decimal basePrice, string? description, string? sku)
+    public void UpdateDetails(string name, decimal basePrice, string? description, string? sku, int? baseStock)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
@@ -56,10 +64,16 @@ public sealed class Product : AuditableEntity
             throw new ArgumentOutOfRangeException(nameof(basePrice), "Base price must be greater than or equal to zero.");
         }
 
+        if (baseStock is < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(baseStock), "Base stock must be greater than or equal to zero.");
+        }
+
         Name = name;
         BasePrice = basePrice;
         Description = description;
         Sku = sku;
+        BaseStock = baseStock;
         Touch();
     }
 
@@ -75,5 +89,16 @@ public sealed class Product : AuditableEntity
         ArgumentNullException.ThrowIfNull(variants);
 
         _variants.AddRange(variants);
+    }
+
+    public void SetBaseStock(int? baseStock)
+    {
+        if (baseStock is < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(baseStock), "Base stock must be greater than or equal to zero.");
+        }
+
+        BaseStock = baseStock;
+        Touch();
     }
 }

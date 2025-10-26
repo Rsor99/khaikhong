@@ -76,6 +76,19 @@ public sealed class Variant : AuditableEntity
     {
         ArgumentNullException.ThrowIfNull(combinations);
 
+        foreach (ProductVariantCombination combination in combinations)
+        {
+            _combinations.Add(combination);
+            combination.Activate();
+        }
+    }
+
+    public void ReplaceCombinations(IEnumerable<ProductVariantCombination> combinations)
+    {
+        ArgumentNullException.ThrowIfNull(combinations);
+
+        _combinations.Clear();
         _combinations.AddRange(combinations);
+        Touch();
     }
 }

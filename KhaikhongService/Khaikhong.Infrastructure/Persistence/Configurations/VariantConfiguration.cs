@@ -37,6 +37,10 @@ public sealed class VariantConfiguration : IEntityTypeConfiguration<Variant>
             .HasDefaultValue(0)
             .IsRequired();
 
+        builder.Property(variant => variant.IsActive)
+            .HasColumnName("is_active")
+            .HasDefaultValue(true);
+
         builder.Property(variant => variant.CreatedBy)
             .HasColumnName("created_by");
 

@@ -10,6 +10,8 @@ public sealed class VariantOption
 
     public string Name { get; private set; } = string.Empty;
 
+    public bool IsActive { get; private set; } = true;
+
     public Product Product { get; internal set; } = null!;
 
     public IReadOnlyCollection<VariantOptionValue> Values => _values.AsReadOnly();
@@ -39,6 +41,34 @@ public sealed class VariantOption
     {
         ArgumentNullException.ThrowIfNull(values);
 
-        _values.AddRange(values);
+        foreach (VariantOptionValue value in values)
+        {
+            value.Option = this;
+            value.Activate();
+            _values.Add(value);
+        }
+    }
+
+    public void ReplaceValues(IEnumerable<VariantOptionValue> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+
+        _values.Clear();
+        foreach (VariantOptionValue value in values)
+        {
+            value.Option = this;
+            value.Activate();
+            _values.Add(value);
+        }
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
     }
 }
