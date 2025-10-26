@@ -40,7 +40,7 @@ public sealed class ProductController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,USER")]
     [ProducesResponseType(typeof(ApiResponse<List<ProductResponseDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
@@ -56,7 +56,7 @@ public sealed class ProductController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("{productId:guid}")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,USER")]
     [ProducesResponseType(typeof(ApiResponse<ProductResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<ProductResponseDto>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
