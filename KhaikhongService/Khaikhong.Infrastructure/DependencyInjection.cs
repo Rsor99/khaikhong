@@ -35,6 +35,8 @@ namespace Khaikhong.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IBundleRepository, BundleRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IVariantRepository, VariantRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             return services;
         }

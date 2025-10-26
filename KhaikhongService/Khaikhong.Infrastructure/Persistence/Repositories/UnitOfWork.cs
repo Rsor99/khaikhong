@@ -10,16 +10,20 @@ public sealed class UnitOfWork(
     IdentityDbContext identityDbContext,
     KhaikhongDbContext khaikhongDbContext,
     IUserRepository userRepository,
-    IProductRepository productRepository) : IUnitOfWork
+    IProductRepository productRepository,
+    IOrderRepository orderRepository) : IUnitOfWork
 {
     private readonly IdentityDbContext _identityDbContext = identityDbContext;
     private readonly KhaikhongDbContext _khaikhongDbContext = khaikhongDbContext;
     private readonly IUserRepository _userRepository = userRepository;
     private readonly IProductRepository _productRepository = productRepository;
+    private readonly IOrderRepository _orderRepository = orderRepository;
 
     public IUserRepository Users => _userRepository;
 
     public IProductRepository Products => _productRepository;
+
+    public IOrderRepository Orders => _orderRepository;
 
     public async Task<int> CompleteAsync()
     {

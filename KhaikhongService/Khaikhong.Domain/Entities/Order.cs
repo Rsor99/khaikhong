@@ -21,4 +21,10 @@ public sealed class Order : BaseEntity
         {
             UserId = userId
         };
+
+    public void AddItem(OrderItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        _items.Add(item);
+    }
 }

@@ -143,8 +143,6 @@ public sealed class ProductRepository(KhaikhongDbContext context)
 
     public async Task<Product?> GetDetailedByIdTrackingAsync(Guid productId, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
-
         Product? product = await _context.Products
             .Where(p => p.Id == productId && p.IsActive)
             .Include(p => p.Options)
@@ -155,8 +153,6 @@ public sealed class ProductRepository(KhaikhongDbContext context)
                         .ThenInclude(value => value.Option)
             .AsSplitQuery()
             .FirstOrDefaultAsync(cancellationToken);
-
-        await transaction.CommitAsync(cancellationToken);
 
         return product;
     }
