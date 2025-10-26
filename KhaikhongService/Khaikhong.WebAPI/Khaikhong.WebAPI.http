@@ -1,0 +1,6 @@
+@Khaikhong.WebAPI_HostAddress = http://localhost:5075
+
+GET {{Khaikhong.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

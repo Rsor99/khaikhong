@@ -1,0 +1,56 @@
+.DS_Store
+.idea/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+**/.vscode/
+
+bin/
+obj/
+**/bin/
+**/obj/
+TestResults/
+packages/
+/artifacts/
+
+# Build artifacts
+*.log
+*.cache
+*.db
+*.ldf
+*.mdf
+
+# Rider / VS Code
+.ionide/
+.history/
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# dotenv
+.env
+
+# Tooling
+/coverage/
+*.coverage
+*.coveragexml
+.nyc_output/
+BenchmarkDotNet.Artifacts/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Publish outputs
+/publish/
+/wwwroot/lib/
