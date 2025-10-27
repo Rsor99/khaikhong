@@ -33,6 +33,8 @@ public sealed class GetAllBundlesQueryHandlerTests
         Assert.True(response.IsSuccess);
         Assert.Equal(200, response.Status);
         Assert.NotNull(response.Data);
-        Assert.Single(response.Data);
+        BundleResponseDto bundleDto = Assert.Single(response.Data);
+        Assert.Equal(3, bundleDto.AvailableBundles);
+        Assert.Equal(40m, bundleDto.Savings);
     }
 }

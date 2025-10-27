@@ -4,6 +4,7 @@ using Khaikhong.Application;
 using Khaikhong.Application.Common.Models;
 using Khaikhong.Infrastructure;
 using Khaikhong.Infrastructure.Authentication;
+using Khaikhong.WebAPI.Configuration;
 using Khaikhong.WebAPI.Middlewares;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -30,6 +31,56 @@ builder.Configuration.AddEnvironmentVariables();
 // ✅ Add Application & Infrastructure layers
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+var corsSettingsSection = builder.Configuration.GetSection(CorsSettings.SectionName);
+var corsSettings = corsSettingsSection.Get<CorsSettings>() ?? new CorsSettings();
+builder.Services.Configure<CorsSettings>(corsSettingsSection);
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsSettings.PolicyName, policy =>
+    {
+        string[] allowedOrigins = corsSettings.AllowedOrigins
+            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+            .Select(origin => origin.Trim())
+            .ToArray();
+
+        bool allowAnyOrigin = allowedOrigins.Length == 0 || allowedOrigins.Contains("*", StringComparer.Ordinal);
+
+        policy.AllowAnyHeader();
+        policy.AllowAnyMethod();
+
+        if (allowAnyOrigin)
+        {
+            if (corsSettings.AllowCredentials)
+            {
+                policy.SetIsOriginAllowed(_ => true);
+                policy.AllowCredentials();
+            }
+            else
+            {
+                policy.AllowAnyOrigin();
+            }
+        }
+        else
+        {
+            policy.WithOrigins(allowedOrigins);
+
+            if (corsSettings.AllowCredentials)
+            {
+                policy.AllowCredentials();
+            }
+        }
+
+        string[] exposedHeaders = corsSettings.ExposedHeaders
+            .Where(header => !string.IsNullOrWhiteSpace(header))
+            .Select(header => header.Trim())
+            .ToArray();
+
+        if (exposedHeaders.Length > 0)
+        {
+            policy.WithExposedHeaders(exposedHeaders);
+        }
+    });
+});
 
 // ✅ JWT settings
 var jwtSettingsSection = builder.Configuration.GetSection(JwtSettings.SectionName);
@@ -169,7 +220,11 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+app.UseCors(CorsSettings.PolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

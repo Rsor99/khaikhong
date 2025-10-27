@@ -36,6 +36,8 @@ public sealed class GetBundleByIdQueryHandlerTests
         Assert.NotNull(response.Data);
         Assert.Equal(bundle.Id, response.Data.Id);
         Assert.Equal(2, response.Data.Products.Count);
+        Assert.Equal(3, response.Data.AvailableBundles);
+        Assert.Equal(40m, response.Data.Savings);
 
         BundleResponseProductDto shirt = Assert.Single(response.Data.Products, product => product.ProductId == ShirtProductId);
         Assert.Null(shirt.Variants);

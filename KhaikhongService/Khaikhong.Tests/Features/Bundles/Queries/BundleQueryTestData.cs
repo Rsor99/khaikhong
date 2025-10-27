@@ -15,7 +15,7 @@ internal static class BundleQueryTestData
     {
         Bundle bundle = Bundle.Create("Eco Starter Kit", 1290m, "Bundle for eco-conscious beginners");
 
-        Product shirt = Product.Create("Eco T-Shirt", 490m);
+        Product shirt = Product.Create("Eco T-Shirt", 490m, baseStock: 6);
         Product mug = Product.Create("Eco Mug", 350m);
 
         Variant mugVariant = Variant.Create(mug.Id, 350m, 10, "MUG-001");

@@ -10,6 +10,10 @@ public sealed record BundleResponseDto
 
     public decimal Price { get; init; }
 
+    public int? AvailableBundles { get; init; }
+
+    public decimal? Savings { get; init; }
+
     public IReadOnlyCollection<BundleResponseProductDto> Products { get; init; } = Array.Empty<BundleResponseProductDto>();
 }
 
