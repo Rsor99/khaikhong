@@ -1,6 +1,6 @@
 # Khaikhong
 
-Software Engineer Candidate – Test Project for FlowAccount. The brief centres on designing a Product Variant and Product Bundle platform that exposes resilient backend APIs and a modern frontend (the original assignment called for Angular; this solution documents a Next.js implementation to emphasise architectural reasoning).
+The brief centres on designing a Product Variant and Product Bundle platform that exposes resilient backend APIs and a modern frontend (the original assignment called for Angular; this solution documents a Next.js implementation to emphasise architectural reasoning).
 
 ## Assessment Brief
 - **Product Variant**: A Product Master can expose multiple option dimensions (e.g., colour, size); every resulting variant carries its own SKU, pricing, and inventory.
